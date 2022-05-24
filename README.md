@@ -1,3 +1,5 @@
+(remember to `git submodule update --init --recursive` after cloning)
+
 # Token with revocable transfer restrictions
 
 ## Summary
