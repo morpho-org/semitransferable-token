@@ -32,7 +32,7 @@ contract Owner {
     token.transferFrom(from, to, amount);
   }
 
-  /* RolesAuthority controlling functions */
+  /* RolesAuthority control functions */
   // target omitted from arguments since it's always the token
   function setRoleCapability(
     uint8 role,
@@ -49,6 +49,7 @@ contract Owner {
       token.setUserRole(user,role,enabled);
   }
 
+  // target omitted from arguments since it's always the token
   function setPublicCapability(
     bytes4 functionSig,
     bool enabled
