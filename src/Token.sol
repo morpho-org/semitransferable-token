@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.13;
+
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {RolesAuthority,Authority} from "./RolesAuthority.sol";
-import "forge-std/console.sol";
 
 /* The purpose of this token is to temporarily be nontransferable except for special cases.
   This is done by role-based access control. The token implements its own authorisation logic (by inheriting from RolesAuthority). It then points to itself as its authority.
@@ -16,9 +16,9 @@ contract Token is ERC20, RolesAuthority {
     string memory _symbol,
     uint8 _decimals,
     address _owner
-  ) 
-  ERC20(_name,_symbol,_decimals) 
-  RolesAuthority(_owner,Authority(this)) 
+  )
+  ERC20(_name,_symbol,_decimals)
+  RolesAuthority(_owner,Authority(this))
   {}
 
   // `transfer` now `requiresAuth`.
@@ -41,7 +41,3 @@ contract Token is ERC20, RolesAuthority {
     _burn(from,amount);
   }
 }
-
-    
-
-
