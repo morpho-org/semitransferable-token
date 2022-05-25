@@ -25,7 +25,7 @@ contract Token is ERC20, RolesAuthority {
     requiresAuth
     returns (bool)
   {
-    super.transfer(to, amount);
+    return super.transfer(to, amount);
   }
 
   // `transferFrom` now `requiresAuth`.
@@ -34,7 +34,7 @@ contract Token is ERC20, RolesAuthority {
     address to,
     uint256 amount
   ) public override requiresAuth returns (bool) {
-    super.transferFrom(from, to, amount);
+    return super.transferFrom(from, to, amount);
   }
 
   // `mint` is added to the external interface, and also `requiresAuth`

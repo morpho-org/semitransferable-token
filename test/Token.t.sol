@@ -108,6 +108,12 @@ contract TokenTest is Test {
     token.transfer($owner,amount);
   }
 
+  function testTransferReturn() public {
+    owner.mint($this,1);
+    owner.setUserRole($this,TRANSFER_ROLE,true);
+    assertEq(token.transfer($owner,1),true);
+  }
+
   function testTransferOK1(uint amount) public {
     owner.mint(amount);
     owner.transfer($this, amount);
@@ -134,6 +140,13 @@ contract TokenTest is Test {
     owner.approve($this);
     vm.expectRevert("UNAUTHORIZED");
     token.transferFrom($owner,$this,amount);
+  }
+
+  function testTransferFromReturn() public {
+    owner.mint(1);
+    owner.approve($this);
+    owner.setUserRole($this,TRANSFER_ROLE,true);
+    assertEq(token.transferFrom($owner,$this,1),true);
   }
 
   function testTransferFromOK1(uint amount) public {
