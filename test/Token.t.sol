@@ -196,7 +196,7 @@ contract TokenTest is Test {
     assertEq(token.balanceOf($this),amount/2 + amount%2);
   }
 
-  /* Removing owner works */
+  /* Test that removing owner works */
 
   function testRemoveOwner(uint amount) public {
     owner.disown();
