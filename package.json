@@ -1,0 +1,42 @@
+{
+  "name": "semitransferable-token",
+  "version": "1.0.0",
+  "description": "(remember to `git submodule update --init --recursive` after cloning)",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mangrovedao/semitransferable-token.git"
+  },
+  "author": "Adrien Husson",
+  "license": "AGPL3",
+  "bugs": {
+    "url": "https://github.com/mangrovedao/semitransferable-token/issues"
+  },
+  "homepage": "https://github.com/mangrovedao/semitransferable-token#readme",
+  "devDependencies": {
+    "prettier": "^2.6.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.19"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.sol",
+        "options": {
+          "printWidth": 80,
+          "tabWidth": 2,
+          "useTabs": false,
+          "singleQuote": false,
+          "bracketSpacing": false,
+          "explicitTypes": "preserve"
+        }
+      }
+    ]
+  }
+}
