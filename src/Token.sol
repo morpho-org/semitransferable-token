@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
-import {RolesAuthority,Authority} from "./RolesAuthority.sol";
+import {RolesAuthority, Authority} from "./RolesAuthority.sol";
 
 /* The purpose of this token is to temporarily be nontransferable except for special cases.
   This is done by role-based access control. The token implements its own authorisation logic (by inheriting from RolesAuthority). It then points to itself as its authority.
@@ -16,28 +16,34 @@ contract Token is ERC20, RolesAuthority {
     string memory _symbol,
     uint8 _decimals,
     address _owner
-  )
-  ERC20(_name,_symbol,_decimals)
-  RolesAuthority(_owner,Authority(this))
-  {}
+  ) ERC20(_name, _symbol, _decimals) RolesAuthority(_owner, Authority(this)) {}
 
   // `transfer` now `requiresAuth`.
-  function transfer(address to, uint256 amount) public override requiresAuth returns (bool) {
+  function transfer(address to, uint256 amount)
+    public
+    override
+    requiresAuth
+    returns (bool)
+  {
     super.transfer(to, amount);
   }
 
   // `transferFrom` now `requiresAuth`.
-  function transferFrom(address from, address to, uint256 amount) public override requiresAuth returns (bool) {
+  function transferFrom(
+    address from,
+    address to,
+    uint256 amount
+  ) public override requiresAuth returns (bool) {
     super.transferFrom(from, to, amount);
   }
 
   // `mint` is added to the external interface, and also `requiresAuth`
   function mint(address to, uint256 amount) external requiresAuth {
-    _mint(to,amount);
+    _mint(to, amount);
   }
 
   // `burn` is added to the external interface, and also `requiresAuth`
   function burn(address from, uint256 amount) external requiresAuth {
-    _burn(from,amount);
+    _burn(from, amount);
   }
 }
