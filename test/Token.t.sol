@@ -32,7 +32,7 @@ contract Owner {
     token.transferFrom(from, to, amount);
   }
 
-  /* RolesAuthority controlling functions */
+  /* RolesAuthority control functions */
   // target omitted from arguments since it's always the token
   function setRoleCapability(
     uint8 role,
@@ -49,6 +49,7 @@ contract Owner {
       token.setUserRole(user,role,enabled);
   }
 
+  // target omitted from arguments since it's always the token
   function setPublicCapability(
     bytes4 functionSig,
     bool enabled
@@ -195,7 +196,7 @@ contract TokenTest is Test {
     assertEq(token.balanceOf($this),amount/2 + amount%2);
   }
 
-  /* Removing owner works */
+  /* Test that removing owner works */
 
   function testRemoveOwner(uint amount) public {
     owner.disown();
