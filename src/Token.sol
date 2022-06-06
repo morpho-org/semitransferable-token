@@ -42,8 +42,8 @@ contract Token is ERC20, RolesAuthority {
     _mint(to, amount);
   }
 
-  // `burn` is added to the external interface, and also `requiresAuth`
-  function burn(address from, uint256 amount) external requiresAuth {
-    _burn(from, amount);
+  // `burn` is added to the external interface
+  function burn(uint256 amount) external {
+    _burn(msg.sender, amount);
   }
 }

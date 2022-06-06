@@ -16,12 +16,6 @@ contract Owner {
   function mint(uint amount) external {
     token.mint(address(this), amount);
   }
-  function burn(address from, uint amount) external {
-    token.burn(from, amount);
-  }
-  function burn(uint amount) external {
-    token.burn(address(this), amount);
-  }
   function approve(address spender) external {
     token.approve(spender, type(uint256).max);
   }
@@ -71,7 +65,6 @@ contract TokenTest is Test {
 
   uint8 immutable TRANSFER_ROLE = 0;
   uint8 immutable MINT_ROLE = 1;
-  uint8 immutable BURN_ROLE = 2;
 
   // tests expect initial balances to be zero
   function setUp() public {
@@ -87,7 +80,6 @@ contract TokenTest is Test {
     owner.setRoleCapability(TRANSFER_ROLE,Token.transfer.selector,true);
     owner.setRoleCapability(TRANSFER_ROLE,Token.transferFrom.selector,true);
     owner.setRoleCapability(MINT_ROLE,Token.mint.selector,true);
-    owner.setRoleCapability(BURN_ROLE,Token.burn.selector,true);
   }
 
   /* Test basic parameters */
@@ -190,25 +182,17 @@ contract TokenTest is Test {
 
   /* Test `burn` */
 
-  function testNoBurnByDefault(uint amount) public {
+  function testSelfBurnOK(uint amount) public {
     owner.mint($this,amount);
-    vm.expectRevert("UNAUTHORIZED");
-    token.burn($this,amount);
-  }
-
-  function testBurnOK1(uint amount) public {
-    owner.mint(amount);
-    owner.burn(amount/2);
-    assertEq(token.balanceOf($owner),amount/2 + amount%2);
-  }
-
-  function testBurnOK2(uint amount) public {
-    owner.setUserRole($this,BURN_ROLE,true);
-    owner.mint($this,amount);
-    token.burn($this,amount/2);
+    token.burn(amount/2);
     assertEq(token.balanceOf($this),amount/2 + amount%2);
   }
 
+  function testSelfBurnKO(uint amount) public {
+    owner.mint($this,amount);
+    vm.expectRevert(stdError.arithmeticError);
+    token.burn(amount+1);
+  }
   /* Test that removing owner works */
 
   function testRemoveOwner(uint amount) public {
