@@ -8,6 +8,7 @@
 * Users can `burn` their tokens.
 * Requires authentication on `transfer`, `transferFrom` and `mint`.
 * Can remove authentication later.
+* Editable `script/deploy.sol` to set token name,symbol & owner.
 
 **The Auth contract differs from solmate's vanilla Auth** : `authority` is immutable. This saves a SLOAD.
 
@@ -28,6 +29,7 @@ token.setRoleCapability(0,address(token),Token.transfer.selector,true);
 token.setRoleCapability(0,address(token),Token.transferFrom.selector,true);
 token.setRoleCapability(1,address(token),Token.mint.selector,true);
 ```
+**This will be done automatically when calling `deploy.sol`**
 
 **To give transfer rights** to an address `addr`, owner should call:
 ```solidity
