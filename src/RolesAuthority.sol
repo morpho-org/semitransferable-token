@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
-import {Auth, Authority} from "./Auth.sol";
+import {Auth} from "./Auth.sol";
 
 /// @notice Role based Authority that supports up to 256 roles.
 /// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/auth/authorities/RolesAuthority.sol)
 /// @author Modified from Dappsys (https://github.com/dapphub/ds-roles/blob/master/src/roles.sol)
-contract RolesAuthority is Auth, Authority {
+contract RolesAuthority is Auth {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -21,7 +21,7 @@ contract RolesAuthority is Auth, Authority {
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _owner, Authority _authority) Auth(_owner, _authority) {}
+    constructor(address _owner) Auth(_owner) {}
 
     /*//////////////////////////////////////////////////////////////
                             ROLE/USER STORAGE

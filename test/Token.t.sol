@@ -89,7 +89,6 @@ contract TokenTest is Test {
     assertEq(token.symbol(),"TK","symbol");
     assertEq(token.decimals(),18,"decimals");
     assertEq(token.owner(),$owner,"owner");
-    assertEq(address(token.authority()),address(token),"authority");
   }
 
   /* Test `transfer` */

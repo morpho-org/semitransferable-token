@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
-import {RolesAuthority, Authority} from "./RolesAuthority.sol";
+import {RolesAuthority} from "./RolesAuthority.sol";
 
 /* The purpose of this token is to temporarily be nontransferable except for special cases.
-  This is done by role-based access control. The token implements its own authorisation logic (by inheriting from RolesAuthority). It then points to itself as its authority.
+  This is done by role-based access control. The token implements its own authorisation logic (by inheriting from RolesAuthority). It points to itself as its authority.
 
   The owner is then able to define who can call what functions of the token, then make the function public at a later stage (at an extra cost of 1 SLOAD).
 */
@@ -16,7 +16,7 @@ contract Token is ERC20, RolesAuthority {
     string memory _symbol,
     uint8 _decimals,
     address _owner
-  ) ERC20(_name, _symbol, _decimals) RolesAuthority(_owner, Authority(this)) {}
+  ) ERC20(_name, _symbol, _decimals) RolesAuthority(_owner) {}
 
   // `transfer` now `requiresAuth`.
   function transfer(address to, uint256 amount)
