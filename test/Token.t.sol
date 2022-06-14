@@ -33,7 +33,7 @@ contract Owner {
     bytes4 functionSig,
     bool enabled
   ) external {
-    token.setRoleCapability(role,address(token),functionSig,enabled);
+    token.setRoleCapability(role,functionSig,enabled);
   }
 
   function setUserRole(
@@ -48,7 +48,7 @@ contract Owner {
     bytes4 functionSig,
     bool enabled
   ) external {
-    token.setPublicCapability(address(token),functionSig,enabled);
+    token.setPublicCapability(functionSig,enabled);
   }
 
   function disown() external {

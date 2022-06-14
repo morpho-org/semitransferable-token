@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
-/// @notice Modified `Auth.sol`, where the contract is its own `authority`.
+/// @notice Modified `Auth.sol`, where the contract is its own `authority` there is no `target` to `canCall`.
 /// @notice Provides a flexible and updatable auth pattern which is completely separate from application logic.
 /// @author Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/auth/Auth.sol)
 /// @author Modified from Dappsys (https://github.com/dapphub/ds-auth/blob/master/src/auth.sol)
@@ -25,7 +25,7 @@ abstract contract Auth {
     function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool) {
         // Checking if the caller is the owner only after calling the authority saves gas in most cases, but be
         // aware that this makes protected functions uncallable even to the owner if the authority is out of order.
-        return canCall(user, address(this), functionSig) || user == owner;
+        return canCall(user, functionSig) || user == owner;
     }
 
     function setOwner(address newOwner) public virtual requiresAuth {
@@ -36,7 +36,6 @@ abstract contract Auth {
 
     function canCall(
         address user,
-        address target,
         bytes4 functionSig
     ) public view virtual returns (bool);
 }

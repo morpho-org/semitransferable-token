@@ -18,9 +18,9 @@ contract Deploy is Script {
       _decimals: 18,
       _owner: msg.sender
     });
-    token.setRoleCapability(0,address(token),Token.transfer.selector,true);
-    token.setRoleCapability(0,address(token),Token.transferFrom.selector,true);
-    token.setRoleCapability(1,address(token),Token.mint.selector,true);
+    token.setRoleCapability(0,Token.transfer.selector,true);
+    token.setRoleCapability(0,Token.transferFrom.selector,true);
+    token.setRoleCapability(1,Token.mint.selector,true);
 
     token.setOwner(owner);
     vm.stopBroadcast();
