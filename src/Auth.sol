@@ -1,25 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
-/// @notice Modified `Auth.sol`, with immutable `authority`.
+/// @notice Modified `Auth.sol`, where the contract is its own `authority`.
 /// @notice Provides a flexible and updatable auth pattern which is completely separate from application logic.
-/// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/auth/Auth.sol)
+/// @author Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/auth/Auth.sol)
 /// @author Modified from Dappsys (https://github.com/dapphub/ds-auth/blob/master/src/auth.sol)
 abstract contract Auth {
     event OwnerUpdated(address indexed user, address indexed newOwner);
 
-    event AuthorityUpdated(address indexed user, Authority indexed newAuthority);
-
     address public owner;
 
-    Authority immutable public authority;
-
-    constructor(address _owner, Authority _authority) {
+    constructor(address _owner) {
         owner = _owner;
-        authority = _authority;
 
         emit OwnerUpdated(msg.sender, _owner);
-        emit AuthorityUpdated(msg.sender, _authority);
     }
 
     modifier requiresAuth() virtual {
@@ -29,11 +23,9 @@ abstract contract Auth {
     }
 
     function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool) {
-        Authority auth = authority; // Memoizing authority saves us a warm SLOAD, around 100 gas.
-
         // Checking if the caller is the owner only after calling the authority saves gas in most cases, but be
         // aware that this makes protected functions uncallable even to the owner if the authority is out of order.
-        return (address(auth) != address(0) && auth.canCall(user, address(this), functionSig)) || user == owner;
+        return canCall(user, address(this), functionSig) || user == owner;
     }
 
     function setOwner(address newOwner) public virtual requiresAuth {
@@ -41,15 +33,10 @@ abstract contract Auth {
 
         emit OwnerUpdated(msg.sender, newOwner);
     }
-}
 
-/// @notice A generic interface for a contract which provides authorization data to an Auth instance.
-/// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/auth/Auth.sol)
-/// @author Modified from Dappsys (https://github.com/dapphub/ds-auth/blob/master/src/auth.sol)
-interface Authority {
     function canCall(
         address user,
         address target,
         bytes4 functionSig
-    ) external view returns (bool);
+    ) public view virtual returns (bool);
 }
