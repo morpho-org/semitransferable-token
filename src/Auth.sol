@@ -23,8 +23,6 @@ abstract contract Auth {
     }
 
     function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool) {
-        // Checking if the caller is the owner only after calling the authority saves gas in most cases, but be
-        // aware that this makes protected functions uncallable even to the owner if the authority is out of order.
         return canCall(user, functionSig) || user == owner;
     }
 
