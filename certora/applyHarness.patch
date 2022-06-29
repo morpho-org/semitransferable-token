@@ -1,0 +1,7 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 01:00:00.000000000 +0100
++++ .gitignore	2022-06-29 11:32:54.702598671 +0200
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+\ No newline at end of file
