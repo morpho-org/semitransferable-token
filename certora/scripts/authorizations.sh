@@ -11,4 +11,5 @@ certoraRun \
     --settings -t=60 \
     --msg "authorizations" \
     --send_only \
+    --settings -useBitVectorTheory \
     $*

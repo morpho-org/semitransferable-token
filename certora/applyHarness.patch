@@ -1,6 +1,6 @@
 diff -ruN Auth.sol Auth.sol
 --- Auth.sol	2022-06-29 11:19:18.533575841 +0200
-+++ Auth.sol	2022-06-29 14:30:35.314451527 +0200
++++ Auth.sol	2022-06-29 14:36:17.273931490 +0200
 @@ -17,12 +17,12 @@
      }
  
@@ -26,14 +26,14 @@ diff -ruN Auth.sol Auth.sol
  }
 diff -ruN .gitignore .gitignore
 --- .gitignore	1970-01-01 01:00:00.000000000 +0100
-+++ .gitignore	2022-06-29 13:33:04.319321335 +0200
++++ .gitignore	2022-06-29 14:36:17.273931490 +0200
 @@ -0,0 +1,2 @@
 +*
 +!.gitignore
 \ No newline at end of file
 diff -ruN RolesAuthority.sol RolesAuthority.sol
 --- RolesAuthority.sol	2022-06-29 11:19:18.533575841 +0200
-+++ RolesAuthority.sol	2022-06-29 14:24:15.776034077 +0200
++++ RolesAuthority.sol	2022-07-06 16:14:28.849493967 +0200
 @@ -13,9 +13,9 @@
  
      event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled);
@@ -46,15 +46,18 @@ diff -ruN RolesAuthority.sol RolesAuthority.sol
  
      /*//////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
-@@ -29,9 +29,9 @@
+@@ -27,11 +27,11 @@
+                             ROLE/USER STORAGE
+     //////////////////////////////////////////////////////////////*/
  
-     mapping(address => bytes32) public getUserRoles;
+-    mapping(address => bytes32) public getUserRoles;
++    mapping(address => uint256) public getUserRoles;
  
 -    mapping(bytes4 => bool) public isCapabilityPublic;
 +    mapping(uint32 => bool) public isCapabilityPublic;
  
 -    mapping(bytes4 => bytes32) public getRolesWithCapability;
-+    mapping(uint32 => bytes32) public getRolesWithCapability;
++    mapping(uint32 => uint256) public getRolesWithCapability;
  
      function doesUserHaveRole(address user, uint8 role) public view virtual returns (bool) {
          return (uint256(getUserRoles[user]) >> role) & 1 != 0;
@@ -67,7 +70,7 @@ diff -ruN RolesAuthority.sol RolesAuthority.sol
      ) public view virtual returns (bool) {
          return (uint256(getRolesWithCapability[functionSig]) >> role) & 1 != 0;
      }
-@@ -50,7 +50,7 @@
+@@ -50,11 +50,11 @@
  
      function canCall(
          address user,
@@ -76,6 +79,11 @@ diff -ruN RolesAuthority.sol RolesAuthority.sol
      ) public view virtual override returns (bool) {
          return
              isCapabilityPublic[functionSig] ||
+-            bytes32(0) != getUserRoles[user] & getRolesWithCapability[functionSig];
++            0 != getUserRoles[user] & getRolesWithCapability[functionSig];
+     }
+ 
+     /*//////////////////////////////////////////////////////////////
 @@ -62,7 +62,7 @@
      //////////////////////////////////////////////////////////////*/
  
@@ -85,7 +93,7 @@ diff -ruN RolesAuthority.sol RolesAuthority.sol
          bool enabled
      ) public virtual requiresAuth {
          isCapabilityPublic[functionSig] = enabled;
-@@ -72,7 +72,7 @@
+@@ -72,13 +72,13 @@
  
      function setRoleCapability(
          uint8 role,
@@ -94,3 +102,23 @@ diff -ruN RolesAuthority.sol RolesAuthority.sol
          bool enabled
      ) public virtual requiresAuth {
          if (enabled) {
+-            getRolesWithCapability[functionSig] |= bytes32(1 << role);
++            getRolesWithCapability[functionSig] |= 1 << role;
+         } else {
+-            getRolesWithCapability[functionSig] &= ~bytes32(1 << role);
++            getRolesWithCapability[functionSig] &= ~(1 << role);
+         }
+ 
+         emit RoleCapabilityUpdated(role, functionSig, enabled);
+@@ -94,9 +94,9 @@
+         bool enabled
+     ) public virtual requiresAuth {
+         if (enabled) {
+-            getUserRoles[user] |= bytes32(1 << role);
++            getUserRoles[user] |= 1 << role;
+         } else {
+-            getUserRoles[user] &= ~bytes32(1 << role);
++            getUserRoles[user] &= ~(1 << role);
+         }
+ 
+         emit UserRoleUpdated(user, role, enabled);

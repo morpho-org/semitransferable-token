@@ -1,11 +1,13 @@
 methods {
+    owner() returns (address) envfree
 	balanceOf(address) returns (uint256) envfree
-    getUserRoles(address) returns (bytes32) envfree
+    getUserRoles(address) returns (uint256) envfree
     isCapabilityPublic(uint32) returns (bool) envfree
-    getRolesWithCapability(uint32) returns (bytes32) envfree
+    getRolesWithCapability(uint32) returns (uint256) envfree
     doesUserHaveRole(address, uint8) returns (bool) envfree
     doesRoleHaveCapability(uint8, uint32) returns (bool) envfree
 }
+
 
 // AUTHORIZATION OVERVIEW
 
@@ -22,16 +24,54 @@ methods {
 //     f@withrevert(e, args);
 //     bool revertWithAuth = lastReverted;
 
-//     assert((revertWithAuth != revertWithoutAuth) <=> 
-//            (authFunction.selector == setPublicCapability(uint32, bool).selector ||
-//             authFunction.selector == setRoleCapability(uint8, uint32, bool).selector ||
-//             authFunction.selector == setUserRole(address, uint8, bool).selector ||
-//             authFunction.selector == setOwner(address).selector));
+//     assert ((revertWithAuth != revertWithoutAuth) <=> 
+//             (authFunction.selector == setPublicCapability(uint32, bool).selector ||
+//              authFunction.selector == setRoleCapability(uint8, uint32, bool).selector ||
+//              authFunction.selector == setUserRole(address, uint8, bool).selector ||
+//              authFunction.selector == setOwner(address).selector));
 // }
+
 
 // OWNER AUTHORIZATION
 
-// TODO
+rule ownerCanAlwaysTransfer() {
+    env e;
+    address sender; address to; uint256 amount;
+    require (sender == e.msg.sender);
+    require (sender == owner());
+    uint256 balanceBefore = balanceOf(sender);
+    require (e.msg.value == 0); 
+
+    transfer@withrevert(e, to, amount);
+
+    assert (lastReverted <=> amount > balanceBefore);
+}
+
+rule ownerCanAlwaysTransferFrom() {
+    env e;
+	address sender; address from; address to; uint256 amount;
+    require (sender == e.msg.sender);
+    require (sender == owner());
+	uint256 balanceBefore = balanceOf(from);
+    uint256 allowanceBefore = allowance(e, from, sender);
+
+	transferFrom@withrevert(e, from, to, amount);
+
+	assert (lastReverted <=> amount > balanceBefore || amount > allowanceBefore);
+}
+
+rule ownerCanAlwaysMint() {
+	env e;
+	address sender; address to; uint256 amount;
+    require (sender == e.msg.sender);
+    require (sender == owner());
+    uint256 totalSupply = totalSupply(e);
+
+	mint@withrevert(e, to, amount);
+
+	assert (lastReverted <=> totalSupply > max_uint256 - amount);
+}
+
 
 // PUBLIC AUTHORIZATION
 
@@ -47,7 +87,7 @@ rule setPublicCapabilityShouldChangeIsPublicCapability() {
 rule transferIsAuthorizedWhenPublicCapability() {
 	env e;
 	address sender; address to; uint256 amount;
-    require(sender == e.msg.sender);
+    require (sender == e.msg.sender);
 	uint256 balanceBefore = balanceOf(sender);
     require (e.msg.value == 0); 
 
@@ -79,7 +119,7 @@ rule transferFromIsAuthorizedWhenPublicCapability() {
 rule mintIsAuthorizedWhenPublicCapability() {
 	env e;
 	address sender; address to; uint256 amount;
-    require(sender == e.msg.sender);
+    require (sender == e.msg.sender);
     uint256 totalSupply = totalSupply(e);
 
     require (isCapabilityPublic(mint(address, uint256).selector));
@@ -89,25 +129,29 @@ rule mintIsAuthorizedWhenPublicCapability() {
 	assert (lastReverted <=> totalSupply > max_uint256 - amount);
 }
 
+
 // ROLE AUTHORIZATION
 
-// rule setUserRoleShouldChangeDoesUserHaveRole() {
-//     env e;
-//     address user; uint8 role; bool enabled;
-//     bytes32 userRolesBefore = getUserRoles(user);
-//     bool userHasRoleBefore = doesUserHaveRole(user, role);
-//     setUserRole(e, user, role, enabled);
-//     bytes32 userRolesAfter = getUserRoles(user);
-//     bytes32 expectedUserRoleAfterIfEnabled = userRolesBefore | (1 << role);
-//     bool userHasRoleAfter = doesUserHaveRole(user, role);
-//     assert (userHasRoleAfter == enabled);
-// }
+rule setUserRoleShouldChangeDoesUserHaveRole() {
+    env e;
+    address user; uint8 role; bool enabled;
+    uint256 userRolesBefore = getUserRoles(user);
+    bool userHasRoleBefore = doesUserHaveRole(user, role);
 
-// rule setRoleCapabilityShouldChangeDoesRoleHaveCapability() {
-//     env e;
-//     uint8 role; method f; bool enabled;
-//     setRoleCapability(e, role, f.selector, enabled);
-//     assert (doesRoleHaveCapability(role, f.selector) == enabled);
-// }
+    setUserRole(e, user, role, enabled);
 
-// TODO
+    uint256 userRolesAfter = getUserRoles(user);
+    uint256 expectedUserRoleAfterIfEnabled = userRolesBefore | (1 << role);
+    bool userHasRoleAfter = doesUserHaveRole(user, role);
+    assert (userHasRoleAfter == enabled);
+}
+
+rule setRoleCapabilityShouldChangeDoesRoleHaveCapability() {
+    env e;
+    uint8 role; method f; bool enabled;
+    
+    setRoleCapability(e, role, f.selector, enabled);
+    assert (doesRoleHaveCapability(role, f.selector) == enabled);
+}
+
+// TODO: general case of role authorization
