@@ -11,7 +11,21 @@ methods {
 
 // AUTHORIZATION OVERVIEW
 
-// TODO: fix this
+// TODO: fix this (certora prover error)
+// rule getUserRolesChanging() {
+//     env e;
+//     method f; calldataarg args; address user;
+//     uint256 userRolesBefore = getUserRoles(user);
+
+//     f(args);
+
+//     uint userRolesAfter = getUserRoles(user);
+
+//     assert (userRolesAfter != userRolesBefore <=> 
+//             f.selector == setUserRole(address, uint8, bool).selector);
+// }
+
+// TODO: fix this (some combination not going through, see next rule for example)
 // rule allFunctionsChangingAuthorization() {
 //     env e; storage initialState = lastStorage;
 //     method f; calldataarg args;
@@ -31,6 +45,22 @@ methods {
 //              authFunction.selector == setOwner(address).selector));
 // }
 
+rule nameName() {
+    env e; storage initialState = lastStorage;
+
+    name@withrevert(e);
+    bool revertWithoutAuth = lastReverted;
+
+    name(e) at initialState;
+    name@withrevert(e);
+    bool revertWithAuth = lastReverted;
+
+    assert ((revertWithAuth != revertWithoutAuth) <=> 
+            (name().selector == setPublicCapability(uint32, bool).selector ||
+             name().selector == setRoleCapability(uint8, uint32, bool).selector ||
+             name().selector == setUserRole(address, uint8, bool).selector ||
+             name().selector == setOwner(address).selector));
+}
 
 // OWNER AUTHORIZATION
 
@@ -54,6 +84,10 @@ rule ownerCanAlwaysTransferFrom() {
     require (sender == owner());
 	uint256 balanceBefore = balanceOf(from);
     uint256 allowanceBefore = allowance(e, from, sender);
+    // require (e.msg.value == 0); 
+    // why is this not needed ?
+    // - test without next line too
+    // - add it to other rules ? (other transferFrom and mint rules, in this file or in erc20reverts)
 
 	transferFrom@withrevert(e, from, to, amount);
 
@@ -104,10 +138,6 @@ rule transferFromIsAuthorizedWhenPublicCapability() {
     require (sender == e.msg.sender);
 	uint256 balanceBefore = balanceOf(from);
     uint256 allowanceBefore = allowance(e, from, sender);
-    // require (e.msg.value == 0); 
-    // why is this not needed ?
-    // - test without next line too
-    // - add it to other rules ?
 
     require (isCapabilityPublic(transferFrom(address, address, uint256).selector));
 
@@ -154,4 +184,47 @@ rule setRoleCapabilityShouldChangeDoesRoleHaveCapability() {
     assert (doesRoleHaveCapability(role, f.selector) == enabled);
 }
 
-// TODO: general case of role authorization
+rule transferIsAuthorizedWhenUserHasAppropriateRole() {
+	env e;
+	address sender; address to; uint256 amount; uint8 role;
+    require (sender == e.msg.sender);
+	uint256 balanceBefore = balanceOf(sender);
+    require (e.msg.value == 0); 
+
+    require (doesUserHaveRole(sender, role));
+    require (doesRoleHaveCapability(role, transfer(address, uint256).selector));
+
+	transfer@withrevert(e, to, amount);
+
+	assert (lastReverted <=> amount > balanceBefore);
+}
+
+rule transferFromIsAuthorizedWhenUserHasAppropriateRole() {
+    env e;
+	address sender; address from; address to; uint256 amount; uint8 role;
+    require (sender == e.msg.sender);
+	uint256 balanceBefore = balanceOf(from);
+    uint256 allowanceBefore = allowance(e, from, sender);
+
+    require (doesUserHaveRole(sender, role));
+    require (doesRoleHaveCapability(role, transferFrom(address, address, uint256).selector));
+
+	transferFrom@withrevert(e, from, to, amount);
+
+	assert (lastReverted <=> amount > balanceBefore || amount > allowanceBefore);
+}
+
+rule mintIsAuthorizedWhenUserHasAppropriateRole() {
+	env e;
+	address sender; address to; uint256 amount; uint8 role;
+    require (sender == e.msg.sender);
+    uint256 totalSupply = totalSupply(e);
+
+    require (doesUserHaveRole(sender, role));
+    require (doesRoleHaveCapability(role, mint(address, uint256).selector));
+
+	mint@withrevert(e, to, amount);
+
+	assert (lastReverted <=> totalSupply > max_uint256 - amount);
+}
+

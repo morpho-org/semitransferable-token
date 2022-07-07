@@ -12,4 +12,4 @@ certoraRun \
     --msg "authorizations" \
     --send_only \
     --settings -useBitVectorTheory \
-    $*
+    $@
