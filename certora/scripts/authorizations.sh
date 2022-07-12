@@ -6,6 +6,7 @@ certoraRun \
     certora/munged/Token.sol \
     --packages solmate=lib/solmate/src/ \
     --verify Token:certora/specs/authorizations.spec \
+    --optimistic_loop \
     --loop_iter 2 \
     --solc_args '["--optimize"]' \
     --settings -t=60 \
