@@ -1,6 +1,7 @@
 methods {
+    totalSupply() returns(uint256) envfree
     balanceOf(address) returns(uint256) envfree
-    _mint(address, uint256) envfree
+    allowance(address, address) returns(uint256) envfree
 }
 
 rule erc20TransferRevertConditions() {
@@ -17,24 +18,24 @@ rule erc20TransferRevertConditions() {
 
 rule erc20TransferFromRevertConditions() {
     env e;
-	address sender; address from; address to; uint256 amount;
+    address sender; address from; address to; uint256 amount;
     require (sender == e.msg.sender);
-	uint256 balanceBefore = balanceOf(from);
-    uint256 allowanceBefore = allowance(e, from, sender);
+    uint256 balanceBefore = balanceOf(from);
+    uint256 allowanceBefore = allowance(from, sender);
+    require (e.msg.value == 0);
 
-	transferFrom@withrevert(e, from, to, amount);
+    transferFrom@withrevert(e, from, to, amount);
 
-	assert (lastReverted <=> amount > balanceBefore || amount > allowanceBefore);
+    assert (lastReverted <=> amount > balanceBefore || amount > allowanceBefore);
 }
 
-// Why is this rule skipped ?
 rule erc20MintRevertConditions() {
-	env e;
-	address sender; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 totalSupply = totalSupply(e);
+    env e;
+    address to; uint256 amount;
+    uint256 totalSupply = totalSupply();
+    require (e.msg.value == 0);
 
-	_mint@withrevert(to, amount);
+    mint@withrevert(e, to, amount);
 
-	assert (lastReverted <=> totalSupply > max_uint256 - amount);
+    assert (lastReverted <=> totalSupply > max_uint256 - amount);
 }

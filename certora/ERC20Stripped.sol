@@ -6,10 +6,14 @@ pragma solidity ^0.8.13;
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
 contract ERC20Stripped is ERC20 {
-    constructor(
-      string memory _name,
-      string memory _symbol,
-      uint8 _decimals,
-      address _owner
-    ) ERC20(_name, _symbol, _decimals) {}
+  constructor(
+    string memory _name,
+    string memory _symbol,
+    uint8 _decimals,
+    address _owner
+  ) ERC20(_name, _symbol, _decimals) {}
+
+  function mint(address to, uint256 amount) external {
+    _mint(to, amount);
+  }
 }

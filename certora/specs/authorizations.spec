@@ -1,12 +1,12 @@
 methods {
     totalSupply() returns (uint256) envfree
+    balanceOf(address) returns (uint256) envfree
     allowance(address, address) returns (uint256) envfree
     owner() returns (address) envfree
-    balanceOf(address) returns (uint256) envfree
     getUserRoles(address) returns (uint256) envfree
-    doesUserHaveRole(address, uint8) returns (bool) envfree
     isCapabilityPublic(uint32) returns (bool) envfree
     getRolesWithCapability(uint32) returns (uint256) envfree
+    doesUserHaveRole(address, uint8) returns (bool) envfree
     doesRoleHaveCapability(uint8, uint32) returns (bool) envfree
 }
 
