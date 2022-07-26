@@ -3,7 +3,7 @@
 # Token with revocable transfer restrictions
 
 ## Summary
-* Based on solmate code. 
+* Based on solmate code.
 * Adds authorizer `mint`.
 * Users can `burn` their tokens.
 * Requires authentication on `transfer`, `transferFrom` and `mint`.
@@ -55,6 +55,6 @@ token.setUserRole(addr,1,true); // for mint
 token.setOwner(address(0));
 ```
 
+## Audits
 
-
-
+The code has been audited by [Omniscia](https://omniscia.io) and the report can be found [online](https://omniscia.io/morpho-specialized-token/) or in this file [Morpho_Omniscia](./audits/Morpho_Omniscia.pdf).
