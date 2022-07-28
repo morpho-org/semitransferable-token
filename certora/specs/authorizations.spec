@@ -26,6 +26,7 @@ rule ownerChanging() {
     f(e, args);
 
     uint256 ownerAfter = owner();
+    // assert (ownerAfter = ownerBefore);
     assert (ownerAfter != ownerBefore =>
             f.selector == setOwner(address).selector);
 }
@@ -99,7 +100,7 @@ rule doesRoleHaveCapabilityChangingMethod() {
     f(e, args);
 
     bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
-    assert (roleHasCapabilityBefore != roleHasCapabilityBefore =>
+    assert (roleHasCapabilityAfter != roleHasCapabilityBefore =>
             f.selector == setRoleCapability(uint8, uint32, bool).selector);
 }
 
@@ -111,7 +112,7 @@ rule doesRoleHaveCapabilityChangingArgs() {
     setRoleCapability(e, roleChanged, capabilityChanged, enabledChanged);
 
     bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
-    assert (roleHasCapabilityBefore != roleHasCapabilityBefore =>
+    assert (roleHasCapabilityAfter != roleHasCapabilityBefore =>
             roleChanged == role && capabilityChanged == capability);
 }
 
