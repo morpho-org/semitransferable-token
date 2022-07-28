@@ -31,6 +31,16 @@ rule ownerChanging() {
             f.selector == setOwner(address).selector);
 }
 
+rule setOwnerShouldChangeOwner() {
+    env e;
+    uint32 newOwner;
+
+    setOwner(e, newOwner);
+
+    uint256 ownerAfter = owner();
+    assert (ownerAfter == newOwner);
+}
+
 rule isCapabilityPublicChanging() {
     env e;
     method f; calldataarg args; uint32 capability;
@@ -41,6 +51,16 @@ rule isCapabilityPublicChanging() {
     bool capabilityPublicAfter = isCapabilityPublic(capability);
     assert (capabilityPublicAfter != capabilityPublicBefore =>
             f.selector == setPublicCapability(uint32, bool).selector);
+}
+
+rule setPublicCapabilityShouldChangeIsPublicCapability() {
+    env e;
+    uint32 capability; bool enabled;
+
+    setPublicCapability(e, capability, enabled);
+
+    bool capabilityIsPublicAfter = isCapabilityPublic(capability);
+    assert (capabilityIsPublicAfter == enabled);
 }
 
 rule getUserRolesChanging() {
@@ -77,7 +97,7 @@ rule doesUserHaveRoleChangingArgs() {
 
     bool userHasRoleAfter = doesUserHaveRole(user, role);
     assert (userHasRoleAfter != userHasRoleBefore =>
-            userChanged == user && roleChanged == role);
+            userChanged == user && roleChanged == role && userHasRoleAfter == enabledChanged);
 }
 
 rule getRolesWithCapabilityChanging() {
@@ -113,39 +133,7 @@ rule doesRoleHaveCapabilityChangingArgs() {
 
     bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
     assert (roleHasCapabilityAfter != roleHasCapabilityBefore =>
-            roleChanged == role && capabilityChanged == capability);
-}
-
-// Check that the authorization functions are able to change the authorization storage.
-
-rule setPublicCapabilityShouldChangeIsPublicCapability() {
-    env e;
-    method f; bool enabled;
-
-    setPublicCapability(e, f.selector, enabled);
-
-    bool capabilityIsPublicAfter = isCapabilityPublic(f.selector);
-    assert (capabilityIsPublicAfter == enabled);
-}
-
-rule setUserRoleShouldChangeDoesUserHaveRole() {
-    env e;
-    address user; uint8 role; bool enabled;
-
-    setUserRole(e, user, role, enabled);
-
-    bool userHasRoleAfter = doesUserHaveRole(user, role);
-    assert (userHasRoleAfter == enabled);
-}
-
-rule setRoleCapabilityShouldChangeDoesRoleHaveCapability() {
-    env e;
-    uint8 role; method f; bool enabled;
-
-    setRoleCapability(e, role, f.selector, enabled);
-
-    bool roleHasCapabilityAfter = doesRoleHaveCapability(role, f.selector);
-    assert (roleHasCapabilityAfter == enabled);
+            roleChanged == role && capabilityChanged == capability && roleHasCapabilityAfter == enabledChanged);
 }
 
 // Compute the set of authorization functions and the set of functions needing authorization.
