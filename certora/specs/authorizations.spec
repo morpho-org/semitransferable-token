@@ -18,6 +18,8 @@ methods {
 
 // Check that only the authorization functions are able to change the authorization storage.
 
+// Authorization storage: owner variable
+
 rule ownerChanging() {
     env e;
     method f; calldataarg args; uint32 newOwner;
@@ -41,6 +43,8 @@ rule setOwnerShouldChangeOwner() {
     assert (ownerAfter == newOwner);
 }
 
+// Authorization storage: isCapabilityPublic mapping
+
 rule isCapabilityPublicChanging() {
     env e;
     method f; calldataarg args; uint32 capability;
@@ -63,6 +67,8 @@ rule setPublicCapabilityShouldChangeIsPublicCapability() {
     assert (capabilityIsPublicAfter == enabled);
 }
 
+// Authorization storage: getUserRoles mapping
+
 rule getUserRolesChanging() {
     env e;
     method f; calldataarg args; address user;
@@ -73,6 +79,16 @@ rule getUserRolesChanging() {
     uint userRolesAfter = getUserRoles(user);
     assert (userRolesAfter != userRolesBefore =>
             f.selector == setUserRole(address, uint8, bool).selector);
+}
+
+rule setUserRoleShouldChangeDoesUserHaveRole() {
+    env e;
+    address user; uint8 role; bool enabled;
+
+    setUserRole(e, user, role, enabled);
+
+    bool userHasRoleAfter = doesUserHaveRole(user, role);
+    assert (userHasRoleAfter == enabled);
 }
 
 rule doesUserHaveRoleChangingMethod() {
@@ -97,8 +113,10 @@ rule doesUserHaveRoleChangingArgs() {
 
     bool userHasRoleAfter = doesUserHaveRole(user, role);
     assert (userHasRoleAfter != userHasRoleBefore =>
-            userChanged == user && roleChanged == role && userHasRoleAfter == enabledChanged);
+            userChanged == user && roleChanged == role);
 }
+
+// Authorization storage: getRolesWithCapability mapping
 
 rule getRolesWithCapabilityChanging() {
     env e;
@@ -110,6 +128,16 @@ rule getRolesWithCapabilityChanging() {
     uint256 rolesAfter = getRolesWithCapability(capability);
     assert (rolesAfter != rolesBefore =>
             f.selector == setRoleCapability(uint8, uint32, bool).selector);
+}
+
+rule setRoleCapabilityShouldChangeDoesRoleHaveCapability() {
+    env e;
+    uint8 role; method f; bool enabled;
+
+    setRoleCapability(e, role, f.selector, enabled);
+
+    bool roleHasCapabilityAfter = doesRoleHaveCapability(role, f.selector);
+    assert (roleHasCapabilityAfter == enabled);
 }
 
 rule doesRoleHaveCapabilityChangingMethod() {
@@ -133,7 +161,7 @@ rule doesRoleHaveCapabilityChangingArgs() {
 
     bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
     assert (roleHasCapabilityAfter != roleHasCapabilityBefore =>
-            roleChanged == role && capabilityChanged == capability && roleHasCapabilityAfter == enabledChanged);
+            roleChanged == role && capabilityChanged == capability);
 }
 
 // Compute the set of authorization functions and the set of functions needing authorization.
