@@ -1,30 +1,17 @@
+using Utils as utils
+
 methods {
     totalSupply() returns (uint256) envfree
     balanceOf(address) returns (uint256) envfree
     allowance(address, address) returns (uint256) envfree
     owner() returns (address) envfree
-    getUserRoles(address) returns (uint256) envfree
-    isCapabilityPublic(uint32) returns (bool) envfree
-    getRolesWithCapability(uint32) returns (uint256) envfree
+    getUserRoles(address) returns (bytes32) envfree
+    isCapabilityPublic(bytes4) returns (bool) envfree
+    getRolesWithCapability(bytes4) returns (bytes32) envfree
     doesUserHaveRole(address, uint8) returns (bool) envfree
-    doesRoleHaveCapability(uint8, uint32) returns (bool) envfree
+    doesRoleHaveCapability(uint8, bytes4) returns (bool) envfree
+    utils.to_bytes4(uint32) returns (bytes4) envfree
 }
-
-
-// UNDERLYING FUNCTIONS
-
-// rule transferSameAsUnderlyingFunction() {
-//     env e; address to; uint256 amount;
-
-//     storage initial = lastStorage;
-//     transfer(e, to, amount);
-//     storage afterTransfer = lastStorage;
-
-//     underlyingTransfer(e, to, amount) at initial;
-//     storage afterUnderlyingTransfer = lastStorage;
-
-//     assert(afterTransfer == afterUnderlyingTransfer);
-// }
 
 
 // AUTHORIZATION STORAGE 
@@ -35,7 +22,7 @@ methods {
 
 rule ownerChanging() {
     env e;
-    method f; calldataarg args; uint32 newOwner;
+    method f; calldataarg args; bytes4 newOwner;
     address ownerBefore = owner();
 
     f(e, args);
@@ -58,17 +45,17 @@ rule setOwnerShouldChangeOwner(address newOwner) {
 
 rule isCapabilityPublicChanging() {
     env e;
-    method f; calldataarg args; uint32 capability;
+    method f; calldataarg args; bytes4 capability;
     bool capabilityPublicBefore = isCapabilityPublic(capability);
 
     f(e, args);
 
     bool capabilityPublicAfter = isCapabilityPublic(capability);
     assert (capabilityPublicAfter != capabilityPublicBefore =>
-            f.selector == setPublicCapability(uint32, bool).selector);
+            f.selector == setPublicCapability(bytes4, bool).selector);
 }
 
-rule setPublicCapabilityShouldChangeIsPublicCapability(uint32 capability, bool enabled) {
+rule setPublicCapabilityShouldChangeIsPublicCapability(bytes4 capability, bool enabled) {
     env e;
 
     setPublicCapability(e, capability, enabled);
@@ -82,11 +69,11 @@ rule setPublicCapabilityShouldChangeIsPublicCapability(uint32 capability, bool e
 rule getUserRolesChanging() {
     env e;
     method f; calldataarg args; address user;
-    uint256 userRolesBefore = getUserRoles(user);
+    bytes32 userRolesBefore = getUserRoles(user);
 
     f(e, args);
 
-    uint userRolesAfter = getUserRoles(user);
+    bytes32 userRolesAfter = getUserRoles(user);
     assert (userRolesAfter != userRolesBefore =>
             f.selector == setUserRole(address, uint8, bool).selector);
 }
@@ -121,24 +108,24 @@ rule doesUserHaveRoleChangingArgs(address userChanged, uint8 roleChanged, bool e
 
     bool userHasRoleAfter = doesUserHaveRole(user, role);
     assert (userHasRoleAfter != userHasRoleBefore =>
-            userChanged == user && roleChanged == role);
+            userChanged == user && roleChanged == role && userHasRoleAfter == enabledChanged);
 }
 
 // getRolesWithCapability mapping
 
 rule getRolesWithCapabilityChanging() {
     env e;
-    method f; calldataarg args; uint32 capability;
-    uint256 rolesBefore = getRolesWithCapability(capability);
+    method f; calldataarg args; bytes4 capability;
+    bytes32 rolesBefore = getRolesWithCapability(capability);
 
     f(e, args);
 
-    uint256 rolesAfter = getRolesWithCapability(capability);
+    bytes32 rolesAfter = getRolesWithCapability(capability);
     assert (rolesAfter != rolesBefore =>
-            f.selector == setRoleCapability(uint8, uint32, bool).selector);
+            f.selector == setRoleCapability(uint8, bytes4, bool).selector);
 }
 
-rule setRoleCapabilityShouldChangeDoesRoleHaveCapability(uint8 role, uint32 capability, bool enabled) {
+rule setRoleCapabilityShouldChangeDoesRoleHaveCapability(uint8 role, bytes4 capability, bool enabled) {
     env e;
 
     setRoleCapability(e, role, capability, enabled);
@@ -149,26 +136,26 @@ rule setRoleCapabilityShouldChangeDoesRoleHaveCapability(uint8 role, uint32 capa
 
 rule doesRoleHaveCapabilityChangingMethod() {
     env e;
-    method f; calldataarg args; uint8 role; uint32 capability;
+    method f; calldataarg args; uint8 role; bytes4 capability;
     bool roleHasCapabilityBefore = doesRoleHaveCapability(role, capability);
 
     f(e, args);
 
     bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
     assert (roleHasCapabilityAfter != roleHasCapabilityBefore =>
-            f.selector == setRoleCapability(uint8, uint32, bool).selector);
+            f.selector == setRoleCapability(uint8, bytes4, bool).selector);
 }
 
-rule doesRoleHaveCapabilityChangingArgs(uint8 roleChanged, uint32 capabilityChanged, bool enabledChanged) {
+rule doesRoleHaveCapabilityChangingArgs(uint8 roleChanged, bytes4 capabilityChanged, bool enabledChanged) {
     env e;
-    uint8 role; uint32 capability;
+    uint8 role; bytes4 capability;
     bool roleHasCapabilityBefore = doesRoleHaveCapability(role, capability);
 
     setRoleCapability(e, roleChanged, capabilityChanged, enabledChanged);
 
     bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
     assert (roleHasCapabilityAfter != roleHasCapabilityBefore =>
-            roleChanged == role && capabilityChanged == capability);
+            roleChanged == role && capabilityChanged == capability && roleHasCapabilityAfter == enabledChanged);
 }
 
 
@@ -184,15 +171,15 @@ rule allFunctionsNeedingAuthorization() {
     bool revertNormal = lastReverted;
 
     env e_auth; bool enabled;
-    setPublicCapability(e_auth, f.selector, enabled) at initialState;
+    setPublicCapability(e_auth, utils.to_bytes4(f.selector), enabled) at initialState;
     f@withrevert(e, args);
     bool revertOwner = lastReverted;
 
     assert ((revertOwner != revertNormal) =>
             (f.selector == setOwner(address).selector) ||
-             f.selector == setPublicCapability(uint32, bool).selector ||
+             f.selector == setPublicCapability(bytes4, bool).selector ||
              f.selector == setUserRole(address, uint8, bool).selector ||
-             f.selector == setRoleCapability(uint8, uint32, bool).selector ||
+             f.selector == setRoleCapability(uint8, bytes4, bool).selector ||
              f.selector == transfer(address, uint256).selector ||
              f.selector == transferFrom(address, address, uint256).selector ||
              f.selector == mint(address, uint256).selector);
@@ -216,18 +203,15 @@ rule allFunctionsNeedingAuthorization() {
 
 //     assert ((revertWithAuth != revertWithoutAuth) =>
 //             (authFunction.selector == setOwner(address).selector) ||
-//              authFunction.selector == setPublicCapability(uint32, bool).selector ||
+//              authFunction.selector == setPublicCapability(bytes4, bool).selector ||
 //              authFunction.selector == setUserRole(address, uint8, bool).selector ||
-//              authFunction.selector == setRoleCapability(uint8, uint32, bool).selector ||
-//              authFunction.selector == transfer(address, uint256).selector ||
-//              authFunction.selector == transferFrom(address, address, uint256).selector ||
-//              authFunction.selector == mint(address, uint256).selector);
+//              authFunction.selector == setRoleCapability(uint8, bytes4, bool).selector));
 // }
 
 
 // AUTHORIZATION CONDITIONS
 
-definition userIsRoleAuthorizedForCapability(address user, uint8 role, uint32 capability) returns bool =
+definition userIsRoleAuthorizedForCapability(address user, uint8 role, bytes4 capability) returns bool =
     user == owner() || 
     isCapabilityPublic(capability) || 
     doesUserHaveRole(user, role) && doesRoleHaveCapability(role, capability);
@@ -236,7 +220,7 @@ definition userIsRoleAuthorizedForCapability(address user, uint8 role, uint32 ca
 rule transferRevertingConditions(address to, uint256 amount) {
     env e; uint8 role;
     require (e.msg.value == 0);
-    require userIsRoleAuthorizedForCapability(e.msg.sender, role, transfer(address, uint256).selector);
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, utils.to_bytes4(transfer(address, uint256).selector));
 
     storage initialState = lastStorage;
     underlyingTransfer@withrevert(e, to, amount);
@@ -251,7 +235,7 @@ rule transferRevertingConditions(address to, uint256 amount) {
 rule transferFromRevertingConditions(address from, address to, uint256 amount) {
     env e; uint8 role;
     require (e.msg.value == 0);
-    require userIsRoleAuthorizedForCapability(e.msg.sender, role, transferFrom(address, address, uint256).selector);
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, utils.to_bytes4(transferFrom(address, address, uint256).selector));
 
     storage initialState = lastStorage;
     underlyingTransferFrom@withrevert(e, from, to, amount);
@@ -266,7 +250,7 @@ rule transferFromRevertingConditions(address from, address to, uint256 amount) {
 rule mintRevertingConditions(address to, uint256 amount) {
     env e; uint8 role;
     require (e.msg.value == 0);
-    require userIsRoleAuthorizedForCapability(e.msg.sender, role, mint(address, uint256).selector);
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, utils.to_bytes4(mint(address, uint256).selector));
 
     storage initialState = lastStorage;
     underlyingMint@withrevert(e, to, amount);

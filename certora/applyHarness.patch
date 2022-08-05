@@ -1,131 +1,13 @@
-diff -ruN Auth.sol Auth.sol
---- Auth.sol	2022-06-29 11:19:18.533575841 +0200
-+++ Auth.sol	2022-08-05 12:00:03.611334396 +0200
-@@ -17,12 +17,12 @@
-     }
- 
-     modifier requiresAuth() virtual {
--        require(isAuthorized(msg.sender, msg.sig), "UNAUTHORIZED");
-+        require(isAuthorized(msg.sender, uint32(msg.sig)), "UNAUTHORIZED");
- 
-         _;
-     }
- 
--    function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool) {
-+    function isAuthorized(address user, uint32 functionSig) internal view virtual returns (bool) {
-         return canCall(user, functionSig) || user == owner;
-     }
- 
-@@ -34,6 +34,6 @@
- 
-     function canCall(
-         address user,
--        bytes4 functionSig
-+        uint32 functionSig
-     ) public view virtual returns (bool);
- }
 diff -ruN .gitignore .gitignore
 --- .gitignore	1970-01-01 01:00:00.000000000 +0100
-+++ .gitignore	2022-08-05 12:00:03.611334396 +0200
++++ .gitignore	2022-08-10 12:07:42.072719518 +0200
 @@ -0,0 +1,2 @@
 +*
 +!.gitignore
-\ No newline at end of file
-diff -ruN RolesAuthority.sol RolesAuthority.sol
---- RolesAuthority.sol	2022-07-28 17:18:44.121629161 +0200
-+++ RolesAuthority.sol	2022-08-05 12:00:03.611334396 +0200
-@@ -13,9 +13,9 @@
- 
-     event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled);
- 
--    event PublicCapabilityUpdated(bytes4 indexed functionSig, bool enabled);
-+    event PublicCapabilityUpdated(uint32 indexed functionSig, bool enabled);
- 
--    event RoleCapabilityUpdated(uint8 indexed role, bytes4 indexed functionSig, bool enabled);
-+    event RoleCapabilityUpdated(uint8 indexed role, uint32 indexed functionSig, bool enabled);
- 
-     /*//////////////////////////////////////////////////////////////
-                                CONSTRUCTOR
-@@ -27,11 +27,11 @@
-                             ROLE/USER STORAGE
-     //////////////////////////////////////////////////////////////*/
- 
--    mapping(address => bytes32) public getUserRoles;
-+    mapping(address => uint256) public getUserRoles;
- 
--    mapping(bytes4 => bool) public isCapabilityPublic;
-+    mapping(uint32 => bool) public isCapabilityPublic;
- 
--    mapping(bytes4 => bytes32) public getRolesWithCapability;
-+    mapping(uint32 => uint256) public getRolesWithCapability;
- 
-     function doesUserHaveRole(address user, uint8 role) public view virtual returns (bool) {
-         return (uint256(getUserRoles[user]) >> role) & 1 != 0;
-@@ -39,7 +39,7 @@
- 
-     function doesRoleHaveCapability(
-         uint8 role,
--        bytes4 functionSig
-+        uint32 functionSig
-     ) public view virtual returns (bool) {
-         return (uint256(getRolesWithCapability[functionSig]) >> role) & 1 != 0;
-     }
-@@ -50,11 +50,11 @@
- 
-     function canCall(
-         address user,
--        bytes4 functionSig
-+        uint32 functionSig
-     ) public view virtual override returns (bool) {
-         return
-             isCapabilityPublic[functionSig] ||
--            bytes32(0) != getUserRoles[user] & getRolesWithCapability[functionSig];
-+            0 != getUserRoles[user] & getRolesWithCapability[functionSig];
-     }
- 
-     /*//////////////////////////////////////////////////////////////
-@@ -62,7 +62,7 @@
-     //////////////////////////////////////////////////////////////*/
- 
-     function setPublicCapability(
--        bytes4 functionSig,
-+        uint32 functionSig,
-         bool enabled
-     ) public virtual requiresAuth {
-         isCapabilityPublic[functionSig] = enabled;
-@@ -72,13 +72,13 @@
- 
-     function setRoleCapability(
-         uint8 role,
--        bytes4 functionSig,
-+        uint32 functionSig,
-         bool enabled
-     ) public virtual requiresAuth {
-         if (enabled) {
--            getRolesWithCapability[functionSig] |= bytes32(1 << role);
-+            getRolesWithCapability[functionSig] |= 1 << role;
-         } else {
--            getRolesWithCapability[functionSig] &= ~bytes32(1 << role);
-+            getRolesWithCapability[functionSig] &= ~(1 << role);
-         }
- 
-         emit RoleCapabilityUpdated(role, functionSig, enabled);
-@@ -94,9 +94,9 @@
-         bool enabled
-     ) public virtual requiresAuth {
-         if (enabled) {
--            getUserRoles[user] |= bytes32(1 << role);
-+            getUserRoles[user] |= 1 << role;
-         } else {
--            getUserRoles[user] &= ~bytes32(1 << role);
-+            getUserRoles[user] &= ~(1 << role);
-         }
- 
-         emit UserRoleUpdated(user, role, enabled);
 diff -ruN Token.sol Token.sol
---- Token.sol	2022-08-05 10:29:36.363758759 +0200
-+++ Token.sol	2022-08-05 12:27:55.353363699 +0200
-@@ -46,4 +46,30 @@
+--- Token.sol	2022-08-03 16:35:14.177394637 +0200
++++ Token.sol	2022-08-10 12:07:50.986054120 +0200
+@@ -46,4 +46,29 @@
    function burn(uint256 amount) external {
      _burn(msg.sender, amount);
    }
@@ -154,5 +36,4 @@ diff -ruN Token.sol Token.sol
 +  function underlyingBurn(uint256 amount) public {
 +    _burn(msg.sender, amount);
 +  }
-+
  }
