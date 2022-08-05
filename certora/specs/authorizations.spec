@@ -13,25 +13,20 @@ methods {
 // The following functions are called the authorization functions:
 // setOwner, setPublicCapability, setUserRole and setRoleCapability.
 
-
 // UNDERLYING FUNCTIONS
 
 // rule transferSameAsUnderlyingFunction() {
 //     env e; address to; uint256 amount;
 
 //     storage initial = lastStorage;
-
 //     transfer(e, to, amount);
-
 //     storage afterTransfer = lastStorage;
 
 //     underlyingTransfer(e, to, amount) at initial;
+//     storage afterUnderlyingTransfer = lastStorage;
 
-//     storage afterCertTransfer = lastStorage;
-
-//     assert(afterTransfer == afterCertTransfer);
+//     assert(afterTransfer == afterUnderlyingTransfer);
 // }
-
 
 
 // AUTHORIZATION OVERVIEW
@@ -43,23 +38,21 @@ methods {
 rule ownerChanging() {
     env e;
     method f; calldataarg args; uint32 newOwner;
-    uint256 ownerBefore = owner();
+    address ownerBefore = owner();
 
     f(e, args);
 
-    uint256 ownerAfter = owner();
-    // assert (ownerAfter = ownerBefore);
+    address ownerAfter = owner();
     assert (ownerAfter != ownerBefore =>
             f.selector == setOwner(address).selector);
 }
 
-rule setOwnerShouldChangeOwner() {
+rule setOwnerShouldChangeOwner(address newOwner) {
     env e;
-    uint32 newOwner;
 
     setOwner(e, newOwner);
 
-    uint256 ownerAfter = owner();
+    address ownerAfter = owner();
     assert (ownerAfter == newOwner);
 }
 
@@ -77,9 +70,8 @@ rule isCapabilityPublicChanging() {
             f.selector == setPublicCapability(uint32, bool).selector);
 }
 
-rule setPublicCapabilityShouldChangeIsPublicCapability() {
+rule setPublicCapabilityShouldChangeIsPublicCapability(uint32 capability, bool enabled) {
     env e;
-    uint32 capability; bool enabled;
 
     setPublicCapability(e, capability, enabled);
 
@@ -101,9 +93,8 @@ rule getUserRolesChanging() {
             f.selector == setUserRole(address, uint8, bool).selector);
 }
 
-rule setUserRoleShouldChangeDoesUserHaveRole() {
+rule setUserRoleShouldChangeDoesUserHaveRole(address user, uint8 role, bool enabled) {
     env e;
-    address user; uint8 role; bool enabled;
 
     setUserRole(e, user, role, enabled);
 
@@ -123,9 +114,8 @@ rule doesUserHaveRoleChangingMethod() {
             f.selector == setUserRole(address, uint8, bool).selector);
 }
 
-rule doesUserHaveRoleChangingArgs() {
+rule doesUserHaveRoleChangingArgs(address userChanged, uint8 roleChanged, bool enabledChanged) {
     env e;
-    address userChanged; uint8 roleChanged; bool enabledChanged;
     address user; uint8 role;
     bool userHasRoleBefore = doesUserHaveRole(user, role);
 
@@ -150,13 +140,12 @@ rule getRolesWithCapabilityChanging() {
             f.selector == setRoleCapability(uint8, uint32, bool).selector);
 }
 
-rule setRoleCapabilityShouldChangeDoesRoleHaveCapability() {
+rule setRoleCapabilityShouldChangeDoesRoleHaveCapability(uint8 role, uint32 capability, bool enabled) {
     env e;
-    uint8 role; method f; bool enabled;
 
-    setRoleCapability(e, role, f.selector, enabled);
+    setRoleCapability(e, role, capability, enabled);
 
-    bool roleHasCapabilityAfter = doesRoleHaveCapability(role, f.selector);
+    bool roleHasCapabilityAfter = doesRoleHaveCapability(role, capability);
     assert (roleHasCapabilityAfter == enabled);
 }
 
@@ -172,9 +161,9 @@ rule doesRoleHaveCapabilityChangingMethod() {
             f.selector == setRoleCapability(uint8, uint32, bool).selector);
 }
 
-rule doesRoleHaveCapabilityChangingArgs() {
+rule doesRoleHaveCapabilityChangingArgs(uint8 roleChanged, uint32 capabilityChanged, bool enabledChanged) {
     env e;
-    uint8 roleChanged; uint32 capabilityChanged; bool enabledChanged; uint8 role; uint32 capability;
+    uint8 role; uint32 capability;
     bool roleHasCapabilityBefore = doesRoleHaveCapability(role, capability);
 
     setRoleCapability(e, roleChanged, capabilityChanged, enabledChanged);
@@ -238,195 +227,55 @@ rule allFunctionsNeedingAuthorization() {
 // }
 
 
-// OWNER AUTHORIZATION
+// AUTHORIZATION CONDITIONS
 
-// Check that the owner is always authorized.
+definition userIsRoleAuthorizedForCapability(address user, uint8 role, uint32 capability) returns bool =
+    user == owner() || 
+    isCapabilityPublic(capability) || 
+    doesUserHaveRole(user, role) && doesRoleHaveCapability(role, capability);
 
-rule ownerCanAlwaysTransfer() {
-    env e;
-    address sender; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 balanceBefore = balanceOf(sender);
+
+rule transferRevertingConditions(address to, uint256 amount) {
+    env e; uint8 role;
     require (e.msg.value == 0);
-
-    require (sender == owner());
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, transfer(address, uint256).selector);
 
     storage initialState = lastStorage;
-    transfer@withrevert(e, to, amount);
+    underlyingTransfer@withrevert(e, to, amount);
+    bool revertAfterUnderlyingTransfer = lastReverted;
+
+    transfer@withrevert(e, to, amount) at initialState;
     bool revertAfterTransfer = lastReverted;
 
-    underlyingTransfer@withrevert(e, to, amount) at initialState;
-    bool revertAfterCertTransfer = lastReverted;
-
-    assert (revertAfterCertTransfer <=> revertAfterTransfer);
+    assert (revertAfterTransfer <=> revertAfterUnderlyingTransfer);
 }
 
-rule ownerCanAlwaysTransferFrom() {
-    env e;
-    address sender; address from; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 balanceBefore = balanceOf(from);
-    uint256 allowanceBefore = allowance(from, sender);
+rule transferFromRevertingConditions(address from, address to, uint256 amount) {
+    env e; uint8 role;
     require (e.msg.value == 0);
-
-    require (sender == owner());
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, transferFrom(address, address, uint256).selector);
 
     storage initialState = lastStorage;
-    transferFrom@withrevert(e, from, to, amount);
+    underlyingTransferFrom@withrevert(e, from, to, amount);
+    bool revertAfterUnderlyingTransferFrom = lastReverted;
+
+    transferFrom@withrevert(e, from, to, amount) at initialState;
     bool revertAfterTransferFrom = lastReverted;
 
-    underlyingTransferFrom@withrevert(e, from, to, amount) at initialState;
-    bool revertAfterCertTransferFrom = lastReverted;
-
-    assert (revertAfterCertTransferFrom <=> revertAfterTransferFrom);
+    assert (revertAfterTransferFrom <=> revertAfterUnderlyingTransferFrom);
 }
 
-rule ownerCanAlwaysMint() {
-    env e;
-    address sender; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 totalSupply = totalSupply();
+rule mintRevertingConditions(address to, uint256 amount) {
+    env e; uint8 role;
     require (e.msg.value == 0);
-
-    require (sender == owner());
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, mint(address, uint256).selector);
 
     storage initialState = lastStorage;
-    mint@withrevert(e, to, amount);
+    underlyingMint@withrevert(e, to, amount);
+    bool revertAfterUnderlyingMint = lastReverted;
+
+    mint@withrevert(e, to, amount) at initialState;
     bool revertAfterMint = lastReverted;
 
-    underlyingMint@withrevert(e, to, amount) at initialState;
-    bool revertAfterCertMint = lastReverted;
-
-    assert (revertAfterCertMint <=> revertAfterMint);
-}
-
-
-// PUBLIC AUTHORIZATION
-
-// Check that public functions (as defined in RolesAuthority) are authorized.
-// See erc20reverts.spec to compare to the underlying function revert conditions.
-
-rule transferIsAuthorizedWhenPublicCapability() {
-    env e;
-    address sender; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 balanceBefore = balanceOf(sender);
-    require (e.msg.value == 0);
-
-    require (isCapabilityPublic(transfer(address, uint256).selector));
-
-    storage initialState = lastStorage;
-    transfer@withrevert(e, to, amount);
-    bool revertAfterTransfer = lastReverted;
-
-    underlyingTransfer@withrevert(e, to, amount) at initialState;
-    bool revertAfterCertTransfer = lastReverted;
-
-    assert (revertAfterCertTransfer <=> revertAfterTransfer);
-}
-
-rule transferFromIsAuthorizedWhenPublicCapability() {
-    env e;
-    address sender; address from; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 balanceBefore = balanceOf(from);
-    uint256 allowanceBefore = allowance(from, sender);
-    require (e.msg.value == 0);
-
-    require (isCapabilityPublic(transferFrom(address, address, uint256).selector));
-
-    storage initialState = lastStorage;
-    transferFrom@withrevert(e, from, to, amount);
-    bool revertAfterTransferFrom = lastReverted;
-
-    underlyingTransferFrom@withrevert(e, from, to, amount) at initialState;
-    bool revertAfterCertTransferFrom = lastReverted;
-
-    assert (revertAfterCertTransferFrom <=> revertAfterTransferFrom);
-}
-
-rule mintIsAuthorizedWhenPublicCapability() {
-    env e;
-    address sender; address to; uint256 amount;
-    require (sender == e.msg.sender);
-    uint256 totalSupply = totalSupply();
-    require (e.msg.value == 0);
-
-    require (isCapabilityPublic(mint(address, uint256).selector));
-
-    storage initialState = lastStorage;
-    mint@withrevert(e, to, amount);
-    bool revertAfterMint = lastReverted;
-
-    underlyingMint@withrevert(e, to, amount) at initialState;
-    bool revertAfterCertMint = lastReverted;
-
-    assert (revertAfterCertMint <=> revertAfterMint);
-}
-
-
-// ROLE AUTHORIZATION
-
-// Check that users that have a role that has a capability for a function can call this function.
-// See erc20reverts.spec to compare to the underlying function revert conditions.
-
-rule transferIsAuthorizedWhenUserHasAppropriateRole() {
-    env e;
-    address sender; address to; uint256 amount; uint8 role;
-    require (sender == e.msg.sender);
-    uint256 balanceBefore = balanceOf(sender);
-    require (e.msg.value == 0);
-
-    require (doesUserHaveRole(sender, role));
-    require (doesRoleHaveCapability(role, transfer(address, uint256).selector));
-
-    storage initialState = lastStorage;
-    transfer@withrevert(e, to, amount);
-    bool revertAfterTransfer = lastReverted;
-
-    underlyingTransfer@withrevert(e, to, amount) at initialState;
-    bool revertAfterCertTransfer = lastReverted;
-
-    assert (revertAfterCertTransfer <=> revertAfterTransfer);
-}
-
-rule transferFromIsAuthorizedWhenUserHasAppropriateRole() {
-    env e;
-    address sender; address from; address to; uint256 amount; uint8 role;
-    require (sender == e.msg.sender);
-    uint256 balanceBefore = balanceOf(from);
-    uint256 allowanceBefore = allowance(from, sender);
-    require (e.msg.value == 0);
-
-    require (doesUserHaveRole(sender, role));
-    require (doesRoleHaveCapability(role, transferFrom(address, address, uint256).selector));
-
-    storage initialState = lastStorage;
-    transferFrom@withrevert(e, from, to, amount);
-    bool revertAfterTransferFrom = lastReverted;
-
-    underlyingTransferFrom@withrevert(e, from, to, amount) at initialState;
-    bool revertAfterCertTransferFrom = lastReverted;
-
-    assert (revertAfterCertTransferFrom <=> revertAfterTransferFrom);
-}
-
-rule mintIsAuthorizedWhenUserHasAppropriateRole() {
-    env e;
-    address sender; address to; uint256 amount; uint8 role;
-    require (sender == e.msg.sender);
-    uint256 totalSupply = totalSupply();
-    require (e.msg.value == 0);
-
-    require (doesUserHaveRole(sender, role));
-    require (doesRoleHaveCapability(role, mint(address, uint256).selector));
-
-    storage initialState = lastStorage;
-    mint@withrevert(e, to, amount);
-    bool revertAfterMint = lastReverted;
-
-    underlyingMint@withrevert(e, to, amount) at initialState;
-    bool revertAfterCertMint = lastReverted;
-
-    assert (revertAfterCertMint <=> revertAfterMint);
+    assert (revertAfterMint <=> revertAfterUnderlyingMint);
 }
