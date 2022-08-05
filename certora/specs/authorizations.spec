@@ -10,8 +10,6 @@ methods {
     doesRoleHaveCapability(uint8, uint32) returns (bool) envfree
 }
 
-// The following functions are called the authorization functions:
-// setOwner, setPublicCapability, setUserRole and setRoleCapability.
 
 // UNDERLYING FUNCTIONS
 
@@ -29,11 +27,11 @@ methods {
 // }
 
 
-// AUTHORIZATION OVERVIEW
+// AUTHORIZATION STORAGE 
 
-// Check that only the authorization functions are able to change the authorization storage.
+// The authorization variables are: owner, isCapabilityPublic, getUserRoles and getRolesCapability.
 
-// Authorization storage: owner variable
+// owner variable
 
 rule ownerChanging() {
     env e;
@@ -56,7 +54,7 @@ rule setOwnerShouldChangeOwner(address newOwner) {
     assert (ownerAfter == newOwner);
 }
 
-// Authorization storage: isCapabilityPublic mapping
+// isCapabilityPublic mapping
 
 rule isCapabilityPublicChanging() {
     env e;
@@ -79,7 +77,7 @@ rule setPublicCapabilityShouldChangeIsPublicCapability(uint32 capability, bool e
     assert (capabilityIsPublicAfter == enabled);
 }
 
-// Authorization storage: getUserRoles mapping
+// getUserRoles mapping
 
 rule getUserRolesChanging() {
     env e;
@@ -126,7 +124,7 @@ rule doesUserHaveRoleChangingArgs(address userChanged, uint8 roleChanged, bool e
             userChanged == user && roleChanged == role);
 }
 
-// Authorization storage: getRolesWithCapability mapping
+// getRolesWithCapability mapping
 
 rule getRolesWithCapabilityChanging() {
     env e;
@@ -173,10 +171,10 @@ rule doesRoleHaveCapabilityChangingArgs(uint8 roleChanged, uint32 capabilityChan
             roleChanged == role && capabilityChanged == capability);
 }
 
-// Compute the set of authorization functions and the set of functions needing authorization.
 
-// Check that all the functions that need authorization are the following:
-// the authorization functions and transfer, transferFrom and mint.
+// AUTHORIZATION FUNCTIONS
+
+// Compute the set of all the functions that need authorization.
 rule allFunctionsNeedingAuthorization() {
     env e;
     storage initialState = lastStorage;
@@ -201,7 +199,7 @@ rule allFunctionsNeedingAuthorization() {
 }
 
 
-// Check that the functions able to change the function authorizations are the authorization functions.
+// Compute the set of all functions able to change the authorizations.
 // This rule can't be checked for now by the Certora tool because there is no way to discriminate on the revert reason. Thus it can fail because the underlying functions reverts.
 // rule allAuthorizationFunctions() {
 //     env e_auth; env e;
