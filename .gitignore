@@ -1,3 +1,7 @@
 cache/
 out/
 node_modules/
+
+#certora
+.certora*
+last_conf*
