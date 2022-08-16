@@ -20,9 +20,9 @@ methods {
 
 // owner variable
 
-rule ownerChanging() {
+rule ownerChangingWithSetOwner() {
     env e;
-    method f; calldataarg args; bytes4 newOwner;
+    method f; calldataarg args;
     address ownerBefore = owner();
 
     f(e, args);
@@ -32,7 +32,7 @@ rule ownerChanging() {
             f.selector == setOwner(address).selector);
 }
 
-rule setOwnerShouldChangeOwner(address newOwner) {
+rule setOwnerShouldSetOwner(address newOwner) {
     env e;
 
     setOwner(e, newOwner);
@@ -43,7 +43,7 @@ rule setOwnerShouldChangeOwner(address newOwner) {
 
 // isCapabilityPublic mapping
 
-rule isCapabilityPublicChanging() {
+rule isCapabilityPublicChangingWithSetPublicCapability() {
     env e;
     method f; calldataarg args; bytes4 capability;
     bool capabilityPublicBefore = isCapabilityPublic(capability);
@@ -55,7 +55,7 @@ rule isCapabilityPublicChanging() {
             f.selector == setPublicCapability(bytes4, bool).selector);
 }
 
-rule setPublicCapabilityShouldChangeIsPublicCapability(bytes4 capability, bool enabled) {
+rule setPublicCapabilityShouldSetIsPublicCapability(bytes4 capability, bool enabled) {
     env e;
 
     setPublicCapability(e, capability, enabled);
@@ -66,7 +66,7 @@ rule setPublicCapabilityShouldChangeIsPublicCapability(bytes4 capability, bool e
 
 // getUserRoles mapping
 
-rule getUserRolesChanging() {
+rule getUserRolesChangingWithSetUserRole() {
     env e;
     method f; calldataarg args; address user;
     bytes32 userRolesBefore = getUserRoles(user);
@@ -87,7 +87,7 @@ rule setUserRoleShouldChangeDoesUserHaveRole(address user, uint8 role, bool enab
     assert (userHasRoleAfter == enabled);
 }
 
-rule doesUserHaveRoleChangingMethod() {
+rule doesUserHaveRoleChangingWithSetUserRole() {
     env e;
     method f; calldataarg args; address user; uint8 role;
     bool userHasRoleBefore = doesUserHaveRole(user, role);
@@ -113,7 +113,7 @@ rule doesUserHaveRoleChangingArgs(address userChanged, uint8 roleChanged, bool e
 
 // getRolesWithCapability mapping
 
-rule getRolesWithCapabilityChanging() {
+rule getRolesWithCapabilityChangingWithSetRoleCapability() {
     env e;
     method f; calldataarg args; bytes4 capability;
     bytes32 rolesBefore = getRolesWithCapability(capability);
@@ -134,7 +134,7 @@ rule setRoleCapabilityShouldChangeDoesRoleHaveCapability(uint8 role, bytes4 capa
     assert (roleHasCapabilityAfter == enabled);
 }
 
-rule doesRoleHaveCapabilityChangingMethod() {
+rule doesRoleHaveCapabilityChangingWithSetRoleCapability() {
     env e;
     method f; calldataarg args; uint8 role; bytes4 capability;
     bool roleHasCapabilityBefore = doesRoleHaveCapability(role, capability);
