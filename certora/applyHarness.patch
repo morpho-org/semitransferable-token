@@ -1,12 +1,12 @@
 diff -ruN .gitignore .gitignore
 --- .gitignore	1970-01-01 01:00:00.000000000 +0100
-+++ .gitignore	2022-08-10 12:07:42.072719518 +0200
++++ .gitignore	2022-08-16 18:19:39.564806091 +0200
 @@ -0,0 +1,2 @@
 +*
 +!.gitignore
 diff -ruN Token.sol Token.sol
---- Token.sol	2022-08-03 16:35:14.177394637 +0200
-+++ Token.sol	2022-08-10 12:07:50.986054120 +0200
+--- Token.sol	2022-08-05 10:29:36.363758759 +0200
++++ Token.sol	2022-08-16 18:21:30.233687410 +0200
 @@ -46,4 +46,29 @@
    function burn(uint256 amount) external {
      _burn(msg.sender, amount);

@@ -161,7 +161,8 @@ rule doesRoleHaveCapabilityChangingArgs(uint8 roleChanged, bytes4 capabilityChan
 
 // AUTHORIZATION FUNCTIONS
 
-// Compute the set of all the functions that need authorization.
+// Compute the set of all the functions that need authorization: setOwner, setPublicCapability, setUserRole, setRoleCapability, transfer, transferFrom, mint
+// We first check that if a function requires authorization then it belongs to the previous set.
 rule allFunctionsNeedingAuthorization() {
     env e;
     storage initialState = lastStorage;
@@ -183,6 +184,77 @@ rule allFunctionsNeedingAuthorization() {
              f.selector == transfer(address, uint256).selector ||
              f.selector == transferFrom(address, address, uint256).selector ||
              f.selector == mint(address, uint256).selector);
+}
+
+// Check that those functions indeed require authorization.
+
+definition noRoleUnauthorizedUserForCapability(address user, bytes4 capability) returns bool =
+    getUserRoles(user) == 0 &&
+    user != owner() &&
+    ! isCapabilityPublic(capability);
+
+
+rule setOwnerRequiresAuthorization(address newOwner) {
+    env e;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(setOwner(address).selector));
+
+    setOwner(e, newOwner);
+
+    assert lastReverted;
+}
+
+rule setPublicCapabilityRequiresAuthorization(bytes4 capability, bool enabled) {
+    env e; uint8 roleAuth;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(setPublicCapability(bytes4, bool).selector));
+
+    setPublicCapability(e, capability, enabled);
+
+    assert lastReverted;
+}
+
+rule setUserRoleRequiresAuthorization(address user, uint8 role, bool enabled) {
+    env e; uint8 roleAuth;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(setUserRole(address, uint8, bool).selector));
+
+    setUserRole(e, user, role, enabled);
+
+    assert lastReverted;
+}
+
+rule setRoleCapabilityRequiresAuthorization(uint8 role, bytes4 capability, bool enabled) {
+    env e; uint8 roleAuth;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(setRoleCapability(uint8, bytes4, bool).selector));
+
+    setRoleCapability(e, role, capability, enabled);
+
+    assert lastReverted;
+}
+
+rule transferRequiresAuthorization(address to, uint256 amount) {
+    env e; uint8 roleAuth;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(transfer(address, uint256).selector));
+
+    transfer(e, to, amount);
+
+    assert lastReverted;
+}
+
+rule transferFromRequiresAuthorization(address from, address to, uint256 amount) {
+    env e; uint8 roleAuth;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(transferFrom(address, address, uint256).selector));
+
+    transferFrom(e, from, to, amount);
+
+    assert lastReverted;
+}
+
+rule mintRequiresAuthorization(address to, uint256 amount) {
+    env e; uint8 roleAuth;
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.to_bytes4(mint(address, uint256).selector));
+
+    mint(e, to, amount);
+
+    assert lastReverted;
 }
 
 
@@ -215,7 +287,6 @@ definition userIsRoleAuthorizedForCapability(address user, uint8 role, bytes4 ca
     user == owner() || 
     isCapabilityPublic(capability) || 
     doesUserHaveRole(user, role) && doesRoleHaveCapability(role, capability);
-
 
 rule transferRevertingConditions(address to, uint256 amount) {
     env e; uint8 role;
