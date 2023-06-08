@@ -3,5 +3,6 @@ out/
 node_modules/
 
 #certora
+certora/munged
 .certora*
 last_conf*
