@@ -3,7 +3,7 @@
 pragma solidity >=0.8.0;
 
 contract Utils {
-    function to_bytes4(uint32 x) public pure returns (bytes4) {
+    function toBytes4(uint32 x) public pure returns (bytes4) {
         return bytes4(x);
     }
 }
