@@ -2,16 +2,19 @@ name: Certora
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   verify:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install python
         uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
       - name: Install certora
         run: pip install certora-cli
@@ -21,6 +24,7 @@ jobs:
           wget https://github.com/ethereum/solidity/releases/download/v0.8.17/solc-static-linux
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc8.17
+
       - name: Verify rule ${{ matrix.script }}
         run: |
           echo "key length" ${#CERTORAKEY}
