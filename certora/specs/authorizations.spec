@@ -1,5 +1,3 @@
-using Utils as utils;
-
 methods {
     function totalSupply() external returns (uint256) envfree;
     function balanceOf(address) external returns (uint256) envfree;
@@ -10,7 +8,6 @@ methods {
     function getRolesWithCapability(bytes4) external returns (bytes32) envfree;
     function doesUserHaveRole(address, uint8) external returns (bool) envfree;
     function doesRoleHaveCapability(uint8, bytes4) external returns (bool) envfree;
-    function utils.toBytes4(uint32) external returns (bytes4) envfree;
 }
 
 
@@ -172,7 +169,7 @@ rule allFunctionsNeedingAuthorization() {
     bool revertNormal = lastReverted;
 
     env e_auth; bool enabled;
-    setPublicCapability(e_auth, utils.toBytes4(f.selector), enabled) at initialState;
+    setPublicCapability(e_auth, to_bytes4(f.selector), enabled) at initialState;
     f@withrevert(e, args);
     bool revertOwner = lastReverted;
 
@@ -196,7 +193,7 @@ definition noRoleUnauthorizedUserForCapability(address user, bytes4 capability) 
 
 rule setOwnerRequiresAuthorization(address newOwner) {
     env e;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:setOwner(address).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:setOwner(address).selector));
 
     setOwner(e, newOwner);
 
@@ -205,7 +202,7 @@ rule setOwnerRequiresAuthorization(address newOwner) {
 
 rule setPublicCapabilityRequiresAuthorization(bytes4 capability, bool enabled) {
     env e; uint8 roleAuth;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:setPublicCapability(bytes4, bool).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:setPublicCapability(bytes4, bool).selector));
 
     setPublicCapability(e, capability, enabled);
 
@@ -214,7 +211,7 @@ rule setPublicCapabilityRequiresAuthorization(bytes4 capability, bool enabled) {
 
 rule setUserRoleRequiresAuthorization(address user, uint8 role, bool enabled) {
     env e; uint8 roleAuth;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:setUserRole(address, uint8, bool).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:setUserRole(address, uint8, bool).selector));
 
     setUserRole(e, user, role, enabled);
 
@@ -223,7 +220,7 @@ rule setUserRoleRequiresAuthorization(address user, uint8 role, bool enabled) {
 
 rule setRoleCapabilityRequiresAuthorization(uint8 role, bytes4 capability, bool enabled) {
     env e; uint8 roleAuth;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:setRoleCapability(uint8, bytes4, bool).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:setRoleCapability(uint8, bytes4, bool).selector));
 
     setRoleCapability(e, role, capability, enabled);
 
@@ -232,7 +229,7 @@ rule setRoleCapabilityRequiresAuthorization(uint8 role, bytes4 capability, bool 
 
 rule transferRequiresAuthorization(address to, uint256 amount) {
     env e; uint8 roleAuth;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:transfer(address, uint256).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:transfer(address, uint256).selector));
 
     transfer(e, to, amount);
 
@@ -241,7 +238,7 @@ rule transferRequiresAuthorization(address to, uint256 amount) {
 
 rule transferFromRequiresAuthorization(address from, address to, uint256 amount) {
     env e; uint8 roleAuth;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:transferFrom(address, address, uint256).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:transferFrom(address, address, uint256).selector));
 
     transferFrom(e, from, to, amount);
 
@@ -250,7 +247,7 @@ rule transferFromRequiresAuthorization(address from, address to, uint256 amount)
 
 rule mintRequiresAuthorization(address to, uint256 amount) {
     env e; uint8 roleAuth;
-    require noRoleUnauthorizedUserForCapability(e.msg.sender, utils.toBytes4(sig:mint(address, uint256).selector));
+    require noRoleUnauthorizedUserForCapability(e.msg.sender, to_bytes4(sig:mint(address, uint256).selector));
 
     mint(e, to, amount);
 
@@ -291,7 +288,7 @@ definition userIsRoleAuthorizedForCapability(address user, uint8 role, bytes4 ca
 rule transferRevertingConditions(address to, uint256 amount) {
     env e; uint8 role;
     require (e.msg.value == 0);
-    require userIsRoleAuthorizedForCapability(e.msg.sender, role, utils.toBytes4(sig:transfer(address, uint256).selector));
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, to_bytes4(sig:transfer(address, uint256).selector));
 
     storage initialState = lastStorage;
     underlyingTransfer@withrevert(e, to, amount);
@@ -306,7 +303,7 @@ rule transferRevertingConditions(address to, uint256 amount) {
 rule transferFromRevertingConditions(address from, address to, uint256 amount) {
     env e; uint8 role;
     require (e.msg.value == 0);
-    require userIsRoleAuthorizedForCapability(e.msg.sender, role, utils.toBytes4(sig:transferFrom(address, address, uint256).selector));
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, to_bytes4(sig:transferFrom(address, address, uint256).selector));
 
     storage initialState = lastStorage;
     underlyingTransferFrom@withrevert(e, from, to, amount);
@@ -321,7 +318,7 @@ rule transferFromRevertingConditions(address from, address to, uint256 amount) {
 rule mintRevertingConditions(address to, uint256 amount) {
     env e; uint8 role;
     require (e.msg.value == 0);
-    require userIsRoleAuthorizedForCapability(e.msg.sender, role, utils.toBytes4(sig:mint(address, uint256).selector));
+    require userIsRoleAuthorizedForCapability(e.msg.sender, role, to_bytes4(sig:mint(address, uint256).selector));
 
     storage initialState = lastStorage;
     underlyingMint@withrevert(e, to, amount);
