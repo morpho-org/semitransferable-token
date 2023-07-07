@@ -13,4 +13,4 @@ certoraRun \
     --msg "authorizations" \
     --send_only \
     --prover_args "-useBitVectorTheory" \
-    $@
+    "$@"
