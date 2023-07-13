@@ -45,7 +45,7 @@ token.setPublicCapability(Token.transferFrom.selector,true);
 ```
 Compared to regular transfers, there will then be 1 extra SLOAD (loading the boolean `isCapabilityPublic(address(token), Token.transfer*.selector)`).
 
-**To give mint rights**, to an addresss `addr`, owner should call
+**To give mint rights**, to an address `addr`, owner should call
 ```solidity
 token.setUserRole(addr,1,true); // for mint
 ```
