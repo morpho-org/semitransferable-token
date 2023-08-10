@@ -10,5 +10,4 @@ certoraRun \
     --solc_args '["--optimize"]' \
     --settings -t=60 \
     --msg "sanity" \
-    --send_only \
     "$@"

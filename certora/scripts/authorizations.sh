@@ -11,6 +11,5 @@ certoraRun \
     --solc_args '["--optimize"]' \
     --smt_timeout 60 \
     --msg "authorizations" \
-    --send_only \
     --prover_args "-useBitVectorTheory" \
     "$@"
