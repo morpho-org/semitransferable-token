@@ -16,7 +16,7 @@ jobs:
 
       matrix:
         conf:
-          - Authorization
+          - Authorizations
 
     steps:
       - uses: actions/checkout@v4
