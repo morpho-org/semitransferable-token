@@ -11,15 +11,22 @@ jobs:
   verify:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+
+      matrix:
+        conf:
+          - Authorization
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Install python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ">=3.11"
 
       - name: Install certora
         run: pip install certora-cli
@@ -28,19 +35,12 @@ jobs:
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.8.17/solc-static-linux
           chmod +x solc-static-linux
-          sudo mv solc-static-linux /usr/local/bin/solc8.17
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.17
 
-      - name: Verify rule ${{ matrix.script }}
-        run: |
-          echo "key length" ${#CERTORAKEY}
-          bash certora/scripts/${{ matrix.script }} --solc solc8.17
+      - name: Apply munging
+        run: make -C certora munged
+
+      - name: Verify ${{ matrix.conf }} specification
+        run: certoraRun certora/confs/${{ matrix.conf }}.conf
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
-
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-
-      matrix:
-        script:
-          - authorizations.sh
